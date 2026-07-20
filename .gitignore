@@ -1,0 +1,19 @@
+# Sensitive registration and administrative files
+报名表*.pdf
+*AI工具使用说明表*.docx
+关于第五届上海市中学数学学术展评活动及报名工作等相关事宜的通知.txt
+
+# Third-party / internal reference bundle
+长期题2参考资料.pdf
+数学展演.zip
+题一-避障游戏备赛包/output/pdf/长期题一-避障游戏-研究方案与研究结果.pdf
+
+# Generated QA intermediates
+tmp/
+**/tmp/
+demo-preview*.png
+
+# Local and editor files
+.DS_Store
+Thumbs.db
+*.log

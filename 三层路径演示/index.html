@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>避障游戏路径演示</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2733;
+      --muted: #607084;
+      --line: #d7dee8;
+      --paper: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #1d8bd8;
+      --blue-soft: rgba(29, 139, 216, 0.15);
+      --orange: #f08a24;
+      --red: #d94b4b;
+      --green: #218b67;
+      --violet: #7357c7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 340px;
+      min-height: 100vh;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 640px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(247,249,252,0.94)),
+        radial-gradient(circle at 18% 20%, rgba(29,139,216,0.12), transparent 28%),
+        radial-gradient(circle at 85% 78%, rgba(33,139,103,0.1), transparent 30%);
+      border-right: 1px solid var(--line);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .legend {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-width: calc(100% - 40px);
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(33, 45, 62, 0.08);
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2px solid currentColor;
+    }
+
+    .line-swatch {
+      width: 22px;
+      height: 4px;
+      border-radius: 4px;
+      display: inline-block;
+      background: currentColor;
+    }
+
+    aside {
+      padding: 24px;
+      overflow: auto;
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .section {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--blue);
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 62vh;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      aside {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="stage" aria-label="避障路径画布">
+      <canvas id="board"></canvas>
+      <div class="legend">
+        <span><i class="dot" style="color: var(--red); background: var(--red);"></i>机器人起点</span>
+        <span><i class="dot" style="color: var(--blue); background: var(--blue-soft);"></i>半径 9 米安全圆</span>
+        <span><i class="line-swatch" style="color: var(--orange);"></i>实验路径</span>
+        <span><i class="dot" style="color: var(--green);"></i>转向位置</span>
+      </div>
+    </section>
+
+    <aside>
+      <h1>第 1 小题：前 2 层路径</h1>
+      <p class="sub">目标是在所有能避开前 2 层障碍物的路线中，使转向卡总张数最少。当前默认展示一条 9 张转向卡的计算验证路线。</p>
+
+      <div class="section">
+        <h2>动画</h2>
+        <div class="controls">
+          <button class="primary" id="playBtn" type="button">播放</button>
+          <button id="resetBtn" type="button">复位</button>
+        </div>
+        <p class="note">橙色点表示机器人中心。蓝色圆已经是“障碍物半径 8 米 + 机器人半径 1 米”的 9 米安全圆。</p>
+      </div>
+
+      <div class="section">
+        <h2>路线</h2>
+        <div class="controls">
+          <button class="primary" id="twoLayerRouteBtn" type="button">前 2 层 9 张</button>
+          <button id="safeRouteBtn" type="button">三层安全中线</button>
+          <button id="betterRouteBtn" type="button">27 张实验路线</button>
+        </div>
+        <p class="note" id="routeNote">这条路线避开前 2 层，三个转角约为 17.6 度、14.4 度、9.9 度，对应 4 + 3 + 2 = 9 张转向卡。</p>
+      </div>
+
+      <div class="section">
+        <h2>显示</h2>
+        <label><input id="showGrid" type="checkbox" checked />显示三角形网格</label>
+        <label><input id="showSafety" type="checkbox" checked />显示 9 米安全圆</label>
+        <label><input id="showLabels" type="checkbox" checked />显示层数与转向卡</label>
+      </div>
+
+      <div class="section">
+        <h2>路径数据</h2>
+        <div class="metric-grid">
+          <div class="metric"><b id="layerMetric">2 层</b><span>展示范围</span></div>
+          <div class="metric"><b>9 米</b><span>安全圆半径</span></div>
+          <div class="metric"><b id="clearanceMetric">约 9.014 米</b><span>路径最小安全距离</span></div>
+          <div class="metric"><b id="cardsMetric">9 张</b><span>本示意路径转向卡</span></div>
+        </div>
+        <p class="note" id="cardsNote">9 张路线已经过计算复核：路径离最近障碍物中心约 9.014 米，大于 9 米。若要称为严格最优，还需补充证明 8 张及以下不可能。</p>
+      </div>
+
+      <div class="section">
+        <h2>讲解顺序</h2>
+        <ol>
+          <li>先说明机器人变成点，障碍物变成半径 9 米安全圆。</li>
+          <li>指出第 1 小题只要求避开前 2 层障碍物。</li>
+          <li>沿路径观察最危险处都贴近 9 米安全圆。</li>
+          <li>把每个折点转角分别换算成转向卡张数。</li>
+          <li>最后强调：9 张是可行路线；严格最优还需要证明 8 张以下不可能。</li>
+        </ol>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    const playBtn = document.getElementById("playBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const twoLayerRouteBtn = document.getElementById("twoLayerRouteBtn");
+    const safeRouteBtn = document.getElementById("safeRouteBtn");
+    const betterRouteBtn = document.getElementById("betterRouteBtn");
+    const showGrid = document.getElementById("showGrid");
+    const showSafety = document.getElementById("showSafety");
+    const showLabels = document.getElementById("showLabels");
+    const routeNote = document.getElementById("routeNote");
+    const layerMetric = document.getElementById("layerMetric");
+    const clearanceMetric = document.getElementById("clearanceMetric");
+    const cardsMetric = document.getElementById("cardsMetric");
+    const cardsNote = document.getElementById("cardsNote");
+
+    const SQRT3 = Math.sqrt(3);
+    const spacing = 20;
+    const safetyRadius = 9;
+    const channelStepY = spacing * SQRT3 / 6;
+    const safePath = [
+      [0, 0],
+      [10, channelStepY],
+      [20, 2 * channelStepY],
+      [30, channelStepY],
+      [40, 2 * channelStepY],
+      [40, 4 * channelStepY],
+      [50, 5 * channelStepY],
+      [60, 4 * channelStepY],
+      [70, 5 * channelStepY]
+    ];
+    const betterPath = [
+      [0, 0],
+      [-1.233, 6.358],
+      [-1.768, 10.909],
+      [-0.158, 20.09],
+      [8.667, 30.865],
+      [10.791, 37.25],
+      [13.933, 42.087],
+      [18.671, 48.053],
+      [20.929, 53.624],
+      [24.652, 64.975],
+      [26.678, 73.296]
+    ];
+    const twoLayerPath = [
+      [0, 0],
+      [1.079, -19.223],
+      [2.074, -21.84],
+      [7.805, -29.963],
+      [18.308, -52.191]
+    ];
+    const routeInfo = {
+      twoLayer: {
+        path: twoLayerPath,
+        color: "#d94b4b",
+        layers: 2,
+        layerText: "2 层",
+        clearance: "约 9.014 米",
+        cards: "9 张",
+        note: "这条路线避开前 2 层，三个转角约为 17.6 度、14.4 度、9.9 度，对应 4 + 3 + 2 = 9 张转向卡。",
+        cardsNote: "9 张路线已经过计算复核：路径离最近障碍物中心约 9.014 米，大于 9 米。若要称为严格最优，还需补充证明 8 张及以下不可能。"
+      },
+      safe: {
+        path: safePath,
+        color: "#f08a24",
+        layers: 3,
+        layerText: "3 层",
+        clearance: "10 米",
+        cards: "72 张",
+        note: "安全中线路线每次拐 60 度，很稳，但转向卡很多。",
+        cardsNote: "这里的 72 张来自 6 次 60 度转向，每次 60 度需要 12 张 5 度转向卡。它只是稳定演示路线，不代表最优。"
+      },
+      better: {
+        path: betterPath,
+        color: "#7357c7",
+        layers: 3,
+        layerText: "3 层",
+        clearance: "约 9.10 米",
+        cards: "27 张",
+        note: "这条路线由离散搜索得到，不走安全中线，安全余量较小，但总转向卡明显减少。",
+        cardsNote: "27 张来自各折点转角分别约 4.27、16.65、29.37、20.92、14.61、5.45、16.39、3.90、4.47 度后向上取整。它是实验路线，不是严格最优证明。"
+      }
+    };
+    let activeRoute = "twoLayer";
+
+    const obstacles = [];
+    for (let i = -3; i <= 3; i += 1) {
+      for (let j = -3; j <= 3; j += 1) {
+        if (i === 0 && j === 0) continue;
+        const layer = Math.max(Math.abs(i), Math.abs(j), Math.abs(i + j));
+        if (layer <= 3) {
+          obstacles.push({
+            x: spacing * i + spacing / 2 * j,
+            y: spacing * SQRT3 / 2 * j,
+            layer
+          });
+        }
+      }
+    }
+
+    const layerColors = {
+      1: "#f08a24",
+      2: "#7357c7",
+      3: "#d94b8c"
+    };
+
+    let progress = 0;
+    let playing = false;
+    let lastTime = 0;
+    let totalLength = pathLength(routeInfo[activeRoute].path);
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+
+    function toScreen(p) {
+      const rect = canvas.getBoundingClientRect();
+      const bounds = { minX: -66, maxX: 86, minY: -58, maxY: 88 };
+      const pad = Math.min(rect.width, rect.height) * 0.06;
+      const scale = Math.min(
+        (rect.width - 2 * pad) / (bounds.maxX - bounds.minX),
+        (rect.height - 2 * pad) / (bounds.maxY - bounds.minY)
+      );
+      const originX = pad - bounds.minX * scale;
+      const originY = rect.height - pad + bounds.minY * scale;
+      return [originX + p[0] * scale, originY - p[1] * scale, scale];
+    }
+
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawGrid();
+      drawLayerHexes();
+      drawObstacles();
+      drawPath();
+      drawRobot();
+    }
+
+    function drawGrid() {
+      if (!showGrid.checked) return;
+      ctx.save();
+      ctx.strokeStyle = "rgba(96,112,132,0.22)";
+      ctx.lineWidth = 1;
+      const points = obstacles.concat([{ x: 0, y: 0, layer: 0 }]);
+      points.forEach((a) => {
+        points.forEach((b) => {
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d > 19.9 && d < 20.1) {
+            line([a.x, a.y], [b.x, b.y]);
+          }
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawLayerHexes() {
+      if (!showLabels.checked) return;
+      ctx.save();
+      const maxLayer = routeInfo[activeRoute].layers;
+      [1, 2, 3].filter((layer) => layer <= maxLayer).forEach((layer) => {
+        const r = spacing * layer;
+        const vertices = [];
+        for (let k = 0; k < 6; k += 1) {
+          const angle = Math.PI / 3 * k;
+          vertices.push([r * Math.cos(angle), r * Math.sin(angle)]);
+        }
+        ctx.strokeStyle = layerColors[layer];
+        ctx.lineWidth = 2;
+        ctx.setLineDash([7, 6]);
+        polygon(vertices);
+        ctx.setLineDash([]);
+        const label = toScreen([r + 3, 0]);
+        ctx.fillStyle = layerColors[layer];
+        ctx.font = "13px Microsoft YaHei, sans-serif";
+        ctx.fillText(`第 ${layer} 层`, label[0], label[1] - 6);
+      });
+      ctx.restore();
+    }
+
+    function drawObstacles() {
+      const maxLayer = routeInfo[activeRoute].layers;
+      obstacles.filter((o) => o.layer <= maxLayer).forEach((o) => {
+        const [x, y, scale] = toScreen([o.x, o.y]);
+        ctx.save();
+        if (showSafety.checked) {
+          ctx.beginPath();
+          ctx.arc(x, y, safetyRadius * scale, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(29, 139, 216, 0.15)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(29, 139, 216, 0.72)";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "#1d8bd8";
+        ctx.fill();
+        if (showLabels.checked) {
+          ctx.fillStyle = "#607084";
+          ctx.font = "11px Microsoft YaHei, sans-serif";
+          ctx.fillText(o.layer, x + 5, y - 5);
+        }
+        ctx.restore();
+      });
+
+      const [sx, sy] = toScreen([0, 0]);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#d94b4b";
+      ctx.fill();
+      ctx.fillStyle = "#1d2733";
+      ctx.font = "13px Microsoft YaHei, sans-serif";
+      ctx.fillText("起点", sx + 8, sy + 4);
+      ctx.restore();
+    }
+
+    function drawPath() {
+      ctx.save();
+      const info = routeInfo[activeRoute];
+      const path = info.path;
+      ctx.strokeStyle = info.color;
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      path.forEach((p, index) => {
+        const [x, y] = toScreen(p);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      path.slice(1, -1).forEach((p, index) => {
+        const [x, y] = toScreen(p);
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#218b67";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (showLabels.checked && activeRoute === "twoLayer") {
+          const labels = ["4张", "3张", "2张"];
+          if (labels[index]) {
+            ctx.fillStyle = "#1d2733";
+            ctx.font = "12px Microsoft YaHei, sans-serif";
+            ctx.fillText(labels[index], x + 7, y - 7);
+          }
+        } else if (showLabels.checked && activeRoute === "safe" && index > 0) {
+          ctx.fillStyle = "#1d2733";
+          ctx.font = "12px Microsoft YaHei, sans-serif";
+          ctx.fillText("12张", x + 7, y - 7);
+        } else if (showLabels.checked && activeRoute === "better") {
+          ctx.fillStyle = "#1d2733";
+          ctx.font = "12px Microsoft YaHei, sans-serif";
+          ctx.fillText(index + 1, x + 7, y - 7);
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawRobot() {
+      const p = pointAtDistance(routeInfo[activeRoute].path, progress * totalLength);
+      const [x, y] = toScreen(p);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#f08a24";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function line(a, b) {
+      const [ax, ay] = toScreen(a);
+      const [bx, by] = toScreen(b);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.stroke();
+    }
+
+    function polygon(points) {
+      ctx.beginPath();
+      points.forEach((p, index) => {
+        const [x, y] = toScreen(p);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    function pathLength(points) {
+      let sum = 0;
+      for (let i = 0; i < points.length - 1; i += 1) {
+        sum += Math.hypot(points[i + 1][0] - points[i][0], points[i + 1][1] - points[i][1]);
+      }
+      return sum;
+    }
+
+    function pointAtDistance(points, distance) {
+      let rest = distance;
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (rest <= len) {
+          const t = len === 0 ? 0 : rest / len;
+          return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        }
+        rest -= len;
+      }
+      return points[points.length - 1];
+    }
+
+    function animate(time) {
+      if (!lastTime) lastTime = time;
+      const delta = time - lastTime;
+      lastTime = time;
+      if (playing) {
+        progress += delta / 9000;
+        if (progress >= 1) {
+          progress = 1;
+          playing = false;
+          playBtn.textContent = "播放";
+        }
+        draw();
+      }
+      requestAnimationFrame(animate);
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (progress >= 1) progress = 0;
+      playing = !playing;
+      playBtn.textContent = playing ? "暂停" : "播放";
+      draw();
+    });
+
+    function setRoute(name) {
+      activeRoute = name;
+      progress = 0;
+      playing = false;
+      playBtn.textContent = "播放";
+      totalLength = pathLength(routeInfo[activeRoute].path);
+      twoLayerRouteBtn.classList.toggle("primary", name === "twoLayer");
+      safeRouteBtn.classList.toggle("primary", name === "safe");
+      betterRouteBtn.classList.toggle("primary", name === "better");
+      routeNote.textContent = routeInfo[activeRoute].note;
+      layerMetric.textContent = routeInfo[activeRoute].layerText;
+      clearanceMetric.textContent = routeInfo[activeRoute].clearance;
+      cardsMetric.textContent = routeInfo[activeRoute].cards;
+      cardsNote.textContent = routeInfo[activeRoute].cardsNote;
+      draw();
+    }
+
+    twoLayerRouteBtn.addEventListener("click", () => setRoute("twoLayer"));
+    safeRouteBtn.addEventListener("click", () => setRoute("safe"));
+    betterRouteBtn.addEventListener("click", () => setRoute("better"));
+
+    resetBtn.addEventListener("click", () => {
+      progress = 0;
+      playing = false;
+      playBtn.textContent = "播放";
+      draw();
+    });
+
+    [showGrid, showSafety, showLabels].forEach((input) => {
+      input.addEventListener("change", draw);
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
