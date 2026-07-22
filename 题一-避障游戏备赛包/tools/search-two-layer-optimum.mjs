@@ -49,12 +49,22 @@ function search(allocation,generations=1800,population=180){
     initialHeadingDegrees:x[0]*180/Math.PI,lengths:x.slice(1,1+m),turnsDegrees:x.slice(1+m).map(v=>v*180/Math.PI),points};
 }
 
-const allocations=process.argv.length>3
-  ? [process.argv.slice(3).map(Number)]
-  : [[3,3,2],[3,2,3],[2,3,3],[4,2,2],[2,4,2],[2,2,4],[2,2,2,2],[3,2,2,1],[2,3,2,1],[2,2,3,1]];
+function compositions(total, prefix=[]){
+  if(total===0) return [prefix];
+  const out=[];
+  for(let k=1;k<=total;k++) out.push(...compositions(total-k,[...prefix,k]));
+  return out;
+}
+const quick=process.argv.includes('--quick');
+const all=process.argv.includes('--all');
+const numeric=process.argv.slice(2).filter(v=>/^[-+]?\d+(\.\d+)?$/.test(v));
+const allocations=numeric.length>1
+  ? [numeric.slice(1).map(Number)]
+  : all ? compositions(8) : [[3,3,2],[3,2,3],[2,3,3],[4,2,2],[2,4,2],[2,2,4],[2,2,2,2],[3,2,2,1],[2,3,2,1],[2,2,3,1]];
+const generations=quick?300:1800, population=quick?60:180;
 let best=null;
 for(const allocation of allocations){
-  const result=search(allocation);
+  const result=search(allocation,generations,population);
   console.log(JSON.stringify(result));
   if(!best||result.minimumDistance>best.minimumDistance)best=result;
   if(result.safe) break;
