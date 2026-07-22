@@ -20,6 +20,11 @@ function verify(n){const p=pathFor(n),obs=obstacles(n);let min=Infinity;
   for(let k=0;k<p.length-1;k++)for(const o of obs)min=Math.min(min,segDist(p[k],p[k+1],o));
   const turns=p.slice(1,-1).map((b,k)=>angle(p[k],b,p[k+2])).filter(x=>x>1e-8);
   const cards=turns.reduce((s,x)=>s+Math.ceil((x-1e-10)/5),0);
+  const expectedCards=n===1?0:24*n;
+  const expectedTurns=n===1?0:2*n;
+  if(cards!==expectedCards)throw new Error(`n=${n}: card formula mismatch (${cards} != ${expectedCards})`);
+  if(turns.length!==expectedTurns)throw new Error(`n=${n}: turn formula mismatch (${turns.length} != ${expectedTurns})`);
+  if(Math.abs(min-10)>1e-8)throw new Error(`n=${n}: safety-channel distance mismatch (${min})`);
   return {n,points:p.length,turns:turns.length,cards,minDistance:min,safe:min+1e-9>=radius,endpoint:p.at(-1)};
 }
 const results=[];for(let n=1;n<=20;n++)results.push(verify(n));

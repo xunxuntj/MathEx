@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import sys
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -11,7 +12,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "12-题一研究方案与研究结果初稿.md"
-OUT = ROOT / "output" / "pdf" / "长期题一-避障游戏-研究方案与研究结果-最终版.pdf"
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "output" / "pdf" / "长期题一-避障游戏-研究方案与研究结果-最终版.pdf"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
@@ -88,7 +89,6 @@ while i < len(lines):
                 Spacer(1, 4*mm),
                 Paragraph("指导教师：徐斌　董明扬", subtitle),
                 Spacer(1, 8*mm),
-                Paragraph("最终版本：2026年7月20日", subtitle),
                 PageBreak(),
             ]
             story.extend(cover_lines)

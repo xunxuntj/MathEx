@@ -1,7 +1,10 @@
-// 可复算的100卡下界候选：28张加速卡 + 72张转向卡的安全中线构造。
+// 可复算的100卡下界候选：19张加速卡 + 81张转向卡。
 const SQRT3=Math.sqrt(3), omega=Math.PI/30, safety=9;
+const numericalStep=0.0005;
 const h=20*SQRT3/6;
-const path=[[0,0],[10,h],[20,2*h],[30,h],[40,2*h],[40,4*h],[50,5*h],[60,4*h],[70,5*h]];
+const terminalHeading=-12*Math.PI/180;
+const path=[[0,0],[10,h],[20,2*h],[30,h],[40,2*h],[50,h],[60,2*h],[70,h],[80,2*h],
+  [80+10*Math.cos(terminalHeading),2*h+10*Math.sin(terminalHeading)]];
 function angle(a,b,c){
   const u=[b[0]-a[0],b[1]-a[1]],v=[c[0]-b[0],c[1]-b[1]];
   return Math.abs(Math.atan2(u[0]*v[1]-u[1]*v[0],u[0]*v[0]+u[1]*v[1])*180/Math.PI);
@@ -53,17 +56,22 @@ function stateAtS(s){
 
 let minBefore={distance:Infinity},hit=null;
 // 从起点开始检查首次碰撞；若折线路线走完仍安全，再沿末方向继续。
-for(let s=0.002;s<=totalLength+500;s+=0.002){
+for(let s=numericalStep;s<=totalLength+500;s+=numericalStep){
   const now=stateAtS(s);
   if(now.distance<minBefore.distance)minBefore=now;
   if(now.distance<safety){
-    let lo=s-0.002,hi=s;
+    let lo=s-numericalStep,hi=s;
     for(let k=0;k<60;k++){const mid=(lo+hi)/2;if(stateAtS(mid).distance>=safety)lo=mid;else hi=mid;}
     hit=stateAtS(lo);break;
   }
 }
 if(!hit)throw new Error('500米延长范围内未找到碰撞');
-const conservative=stateAtS(Math.max(0,hit.s-0.02));
+const conservative=stateAtS(Math.max(0,hit.s-0.10));
+let conservativeSampleMinimum=Infinity;
+for(let s=0;s<conservative.s;s+=numericalStep)conservativeSampleMinimum=Math.min(conservativeSampleMinimum,stateAtS(s).distance);
+conservativeSampleMinimum=Math.min(conservativeSampleMinimum,conservative.distance);
+const distanceLipschitzPerMeter=1+omega*conservative.radius/speed;
+const certifiedContinuousClearanceLowerBound=conservativeSampleMinimum-distanceLipschitzPerMeter*numericalStep/2;
 console.log(JSON.stringify({
   cards:{acceleration:accelerationCards,turn:turnCards.reduce((a,b)=>a+b,0),deceleration:0,total:100},
   speedMetersPerSecond:speed,
@@ -74,9 +82,14 @@ console.log(JSON.stringify({
   firstCollisionTimeSeconds:hit.t,
   collisionBoundaryRadiusMeters:hit.radius,
   conservativeReachableRadiusMeters:conservative.radius,
+  conservativeEndpoint:conservative.p,
   conservativeClearanceMeters:conservative.distance,
   conservativeSafetyMarginMeters:conservative.distance-safety,
+  conservativeSampleMinimumMeters:conservativeSampleMinimum,
+  distanceLipschitzPerMeter,
+  certifiedContinuousClearanceLowerBoundMeters:certifiedContinuousClearanceLowerBound,
+  certifiedContinuousSafetyMarginMeters:certifiedContinuousClearanceLowerBound-safety,
   collisionSite:hit.site,
-  numericalStepMeters:0.002,
+  numericalStepMeters:numericalStep,
   status:'explicit 100-card schedule; distance immediately before first collision is a feasible lower bound, not a global optimum'
 },null,2));

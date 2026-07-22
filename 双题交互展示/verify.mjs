@@ -17,10 +17,10 @@ const referenced = [...script.matchAll(/getElementById\('([^']+)'\)|getElementBy
 const missing = [...new Set(referenced.filter((id) => !ids.includes(id)))];
 if (missing.length) throw new Error(`脚本引用了不存在的 id: ${missing.join(", ")}`);
 
-for (const required of ["78.2448", "5169.9", "0.01836", "0.110°", "24*layers", "K₁,₄", "严格证明", "程序验证"]) {
+for (const required of ["94.5106", "693.9", "0.15408", "0.925°", "24*layers", "K₁,₄", "严格证明", "程序验证"]) {
   if (!html.includes(required)) throw new Error(`缺少关键展示内容: ${required}`);
 }
-for (const required of ["28张加速卡", "72张转向卡", "78.2448米", "9.01999"]) {
+for (const required of ["19张加速卡", "81张转向卡", "94.5106米", "9.000759"]) {
   if (!q1Research.includes(required)) throw new Error(`题一研究材料与展示关键值不一致: ${required}`);
 }
 for (const required of ["E(n,1)=7", "E_c(n,1)=n", "57", "78–84"]) {
@@ -108,7 +108,7 @@ if (elements.q2T.textContent !== 1) throw new Error("题二下一步按钮未生
 elements.q1Rotation.onclick();
 if (elements.q1Clear.textContent !== "周期60秒" || !elements.q1Explain.textContent.includes("刚性旋转")) throw new Error("题一旋转机制按钮未生效");
 elements.q1Dynamic.onclick();
-if (elements.q1Cards.textContent !== "28+72") throw new Error("题一100卡按钮未更新指标");
+if (elements.q1Cards.textContent !== "19+81") throw new Error("题一100卡按钮未更新指标");
 if (elements.q1KeyInsight.hidden) throw new Error("题一100卡核心信息未醒目显示");
 if (elements.q1Layers.textContent !== "5层可见") throw new Error("题一100卡未显示正确可见层数");
 if (!elements.q1Explain.textContent.includes("无限网格")) throw new Error("题一100卡未说明无限网格验证");
@@ -126,8 +126,8 @@ q2Modes[3].onclick();
 if (!elements.q2Status.textContent.includes("严格区间与计算候选")) throw new Error("题二结果分级提示缺失");
 elements.fullscreenBtn.onclick();
 
-const dynamicEnd = [72.2063021606, 30.1413226058];
-if (Math.abs(Math.hypot(...dynamicEnd) - 78.2448043012) > 1e-8) throw new Error("100卡展示终点半径错误");
+const dynamicEnd = [94.1235579499, 8.5449504674];
+if (Math.abs(Math.hypot(...dynamicEnd) - 94.5106361192) > 1e-8) throw new Error("100卡展示终点半径错误");
 if (!html.includes("@media(max-width:900px)") || !html.includes("@media(max-width:520px)")) throw new Error("缺少投影/窄屏适配");
 
 console.log(JSON.stringify({ ok: true, ids: ids.length, scriptBytes: Buffer.byteLength(script), offline: true, verifiedLayers: 12, reportCrossCheck: true, responsiveBreakpoints: [900, 520], interactions: ["全屏", "切换题目", "题一点化", "题一安全圆", "题一路线", "题一层数1–12", "题一旋转60秒周期", "题一100卡真实相位", "题二下一步", "题二colex滑块", "题二结果分级"] }, null, 2));
