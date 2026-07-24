@@ -27,7 +27,7 @@
         <h2>从“圆机器人”到“点的路径”</h2><p class="callout">机器人半径1米、障碍物半径8米，等价为点机器人避开半径9米的安全圆。</p>
         <div class="controls"><button class="btn primary" id="q1Static" aria-pressed="true">一般 n 层</button><button class="btn" id="q1Rotation" aria-pressed="false">旋转机制</button><button class="btn" id="q1Dynamic" aria-pressed="false">100卡方案</button><button class="btn" id="q1Play">播放</button><button class="btn" id="q1Reset">复位</button></div><div class="progress-track" aria-label="动画进度"><i id="q1Progress"></i></div>
         <div class="stats"><div class="stat"><b id="q1Layers">3</b><span>展示层数 n</span></div><div class="stat"><b id="q1Cards">—</b><span>转向卡 / 总卡数</span></div><div class="stat"><b id="q1Clear">8m + 1m</b><span>碰撞边界</span></div><div class="stat"><b id="q1Distance">0.0m</b><span>当前离原点距离</span></div></div>
-        <p class="callout" id="q1KeyInsight" hidden><strong>100卡核心：</strong>47张转向卡+53张加速卡候选，速度约1.368×10⁶米/秒，保守过程约0.00012962秒，障碍物仅转过约0.00078°；碰撞边界前回退0.02米，保守可达174.5136米，余量约0.01458米。它是可复算的采样候选，不是全局最优证明。</p>
+        <p class="callout" id="q1KeyInsight" hidden><strong>100卡核心：</strong>47张转向卡+53张加速卡候选，速度约1.368×10⁶米/秒，保守过程约0.00012962秒，障碍物仅转过约0.00078°；碰撞边界前回退0.02米，保守可达174.5136米，余量约0.01458米。该结果属于可复算的采样路径构造。</p>
         <div class="group" id="layerGroup"><label><span>一般层数</span><strong id="layerValue">3 层</strong></label><input id="layerRange" type="range" min="1" max="12" value="3"></div>
         <div class="group"><p id="q1Explain" aria-live="polite">原题中机器人半径1米、障碍物半径8米。先观察两个有大小的圆何时会相碰。</p></div>
         <div class="steps" aria-label="讲解步骤"><button class="step active" data-q1-step="0">1 点化</button><button class="step" data-q1-step="1">2 安全圆</button><button class="step" data-q1-step="2">3 路线</button><button class="step" data-q1-step="3">4 验证</button></div>
@@ -48,7 +48,7 @@
       </aside>
     </div>
   </section>
-  <div class="footer"><span>键盘：← → 切换题目，空格播放/下一步，R复位</span><span>开放题展示：理解 / 思路 / 复算 / 答疑；严格证明 / 程序验证 / 猜想分开标注</span></div>
+  <div class="footer"><span>键盘：← → 切换题目，空格播放/下一步，R复位</span><span>证据标注：严格证明 / 程序验证 / 数值候选 / 猜想</span></div>
 </main>
 <script>
   const tabs=[...document.querySelectorAll('.tab')];
@@ -89,7 +89,7 @@
   document.querySelectorAll('.q2mode').forEach(x=>x.onclick=()=>setQ2(x.dataset.mode));document.getElementById('q2Next').onclick=()=>{if(q2Mode==='motif')setQ2('triangle');else if(q2Mode==='triangle'){q2Step=(q2Step+1)%5;drawQ2()}else if(q2Mode==='colex'){sVal=(sVal+1)%8;document.getElementById('edgeRange').value=sVal;document.getElementById('edgeValue').textContent=sVal;drawQ2()}else setQ2('motif')};document.getElementById('q2Reset').onclick=()=>setQ2('motif');document.getElementById('edgeRange').oninput=e=>{sVal=+e.target.value;document.getElementById('edgeValue').textContent=sVal;drawQ2()};
   window.addEventListener('resize',resizeQ1);window.addEventListener('keydown',e=>{if(e.key==='ArrowRight')showView('q2');if(e.key==='ArrowLeft')showView('q1');if(e.key.toLowerCase()==='r'){document.querySelector('.view.active').id==='q1'?document.getElementById('q1Reset').click():document.getElementById('q2Reset').click()}if(e.code==='Space'){e.preventDefault();document.querySelector('.view.active').id==='q1'?document.getElementById('q1Play').click():document.getElementById('q2Next').click()}});
   const originalDynamicClick=document.getElementById('q1Dynamic').onclick;
-  document.getElementById('q1Dynamic').onclick=()=>{setQ1('dynamic');document.getElementById('q1Speed').textContent='1.368×10⁶ m/s';document.getElementById('q1Cards').textContent='47+53';document.getElementById('q1Clear').textContent='≥9.014577m';document.getElementById('q1Explain').textContent='无限网格中，47张转向卡+53张加速卡候选保守可达174.5136米，余量约0.01458米；这是采样候选，不是全局最优。'};
+  document.getElementById('q1Dynamic').onclick=()=>{setQ1('dynamic');document.getElementById('q1Speed').textContent='1.368×10⁶ m/s';document.getElementById('q1Cards').textContent='47+53';document.getElementById('q1Clear').textContent='≥9.014577m';document.getElementById('q1Explain').textContent='无限网格中，47张转向卡+53张加速卡候选保守可达174.5136米，余量约0.01458米；该结果属于可复算的采样路径构造。'};
   resizeQ1();drawQ2();requestAnimationFrame(animate);
 </script>
 </body>
