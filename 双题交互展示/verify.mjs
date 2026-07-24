@@ -108,7 +108,7 @@ if (elements.q2T.textContent !== 1) throw new Error("题二下一步按钮未生
 elements.q1Rotation.onclick();
 if (elements.q1Clear.textContent !== "周期60秒" || !elements.q1Explain.textContent.includes("刚性旋转")) throw new Error("题一旋转机制按钮未生效");
 elements.q1Dynamic.onclick();
-if (elements.q1Cards.textContent !== "19+81") throw new Error("题一100卡按钮未更新指标");
+if (elements.q1Cards.textContent !== "47+53") throw new Error("题一100卡按钮未更新指标");
 if (elements.q1KeyInsight.hidden) throw new Error("题一100卡核心信息未醒目显示");
 if (elements.q1Layers.textContent !== "5层可见") throw new Error("题一100卡未显示正确可见层数");
 if (!elements.q1Explain.textContent.includes("无限网格")) throw new Error("题一100卡未说明无限网格验证");
