@@ -80,7 +80,7 @@ def parse(lines):
         if s.startswith('# '):story.append(Paragraph(clean(s[2:]),h1))
         elif s.startswith('## '):story.append(Paragraph(clean(s[3:]),h2))
         elif s.startswith('### '):story.append(Paragraph(clean(s[4:]),h3))
-        elif re.match(r'^[-*] ',s):story.append(Paragraph('• '+clean(s[2:]),bullet))
+        elif re.match(r'^[-*] ',s):story.append(Paragraph('- '+clean(s[2:]),bullet))
         elif re.match(r'^\d+\. ',s):story.append(Paragraph(clean(s),bullet))
         else:story.append(Paragraph(clean(s),body))
         i+=1

@@ -12,7 +12,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "12-题一研究方案与研究结果初稿.md"
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "output" / "pdf" / "长期题一-避障游戏-研究方案与研究结果-最终版.pdf"
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "output" / "pdf" / "长期题一-避障游戏-研究方案与研究结果.pdf"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))

@@ -126,8 +126,8 @@ q2Modes[3].onclick();
 if (!elements.q2Status.textContent.includes("严格区间与计算候选")) throw new Error("题二结果分级提示缺失");
 elements.fullscreenBtn.onclick();
 
-const dynamicEnd = [94.1235579499, 8.5449504674];
-if (Math.abs(Math.hypot(...dynamicEnd) - 94.5106361192) > 1e-8) throw new Error("100卡展示终点半径错误");
+const dynamicEnd = [-93.2858520209, 147.4881327440];
+if (Math.abs(Math.hypot(...dynamicEnd) - 174.5136083163) > 1e-8) throw new Error("100卡展示终点半径错误");
 if (!html.includes("@media(max-width:900px)") || !html.includes("@media(max-width:520px)")) throw new Error("缺少投影/窄屏适配");
 
 console.log(JSON.stringify({ ok: true, ids: ids.length, scriptBytes: Buffer.byteLength(script), offline: true, verifiedLayers: 12, reportCrossCheck: true, responsiveBreakpoints: [900, 520], interactions: ["全屏", "切换题目", "题一点化", "题一安全圆", "题一路线", "题一层数1–12", "题一旋转60秒周期", "题一100卡真实相位", "题二下一步", "题二colex滑块", "题二结果分级"] }, null, 2));

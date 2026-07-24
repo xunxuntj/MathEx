@@ -59,7 +59,18 @@
 
   const q1=document.getElementById('q1Canvas'),c=q1.getContext('2d');let q1Mode='static',q1Step=0,layers=3,playing=false,prog=0,last=0;const SQ=Math.sqrt(3),spacing=20;
   function staticPathFor(n){const h=spacing*SQ/6;if(n===1)return[[0,0],[30,10*SQ]];const p=[[0,0],[10,h],[20,2*h],[30,h],[40,2*h],[40,4*h]];for(let x=50;x<=20*n+10;x+=10){const k=(x-50)/10;p.push([x,(k%2===0?5:4)*h])}return p}
-  const dynamicPath=[[0,0],[-10,5.7735026919],[-17.5,11.7735026919],[-21,20.2735026919],[-28,30.2735026919],[-35,43.2735026919],[-42,56.2735026919],[-50.5,70.2735026919],[-61.5,89.7735026919],[-72,108.2735026919],[-81.5,124.7735026919],[-89,136.7735026919],[-93.2088793742,147.2957011274]];
+  const dynamicPath=[
+    [0,0],[-10,5.7735026919],[-17.5,11.7735026919],[-21,20.2735026919],
+    [-24.5,25.2735026919],[-28,30.2735026919],[-31.5,37.7735026919],
+    [-32.5,39.7735026919],[-35,43.2735026919],[-37.5,46.7735026919],
+    [-38.5,48.7735026919],[-42,56.2735026919],[-46.5,62.7735026919],
+    [-48.5,65.7735026919],[-50.5,70.2735026919],[-52.5,74.7735026919],
+    [-58,82.2735026919],[-61.5,89.7735026919],[-62.5,91.7735026919],
+    [-65,95.2735026919],[-67.5,98.7735026919],[-68.5,100.7735026919],
+    [-72,108.2735026919],[-75.5,113.2735026919],[-79,118.2735026919],
+    [-81.5,124.7735026919],[-88,134.2735026919],[-89,136.7735026919],
+    [-93.2858520209,147.4881327440]
+  ];
   function resizeQ1(){const r=q1.getBoundingClientRect(),d=devicePixelRatio||1;q1.width=r.width*d;q1.height=r.height*d;c.setTransform(d,0,0,d,0,0);drawQ1();}
   function world(p){const r=q1.getBoundingClientRect(),displayLayers=q1Mode==='dynamic'?5:q1Mode==='rotation'?3:layers,span=44*Math.max(3,displayLayers)+70,scale=Math.min(r.width/span,r.height/(38*Math.max(3,displayLayers)+55)),ox=r.width*.38,oy=r.height/2+18;return[ox+p[0]*scale,oy-p[1]*scale,scale]}
   function obstacles(max){const a=[];for(let i=-max;i<=max;i++)for(let j=-max;j<=max;j++){const l=Math.max(Math.abs(i),Math.abs(j),Math.abs(i+j));if(l&&l<=max)a.push({x:20*i+10*j,y:10*SQ*j,l})}return a}
@@ -67,7 +78,26 @@
   function pathPoint(path,t){let lens=[],total=0;for(let i=0;i<path.length-1;i++){let d=Math.hypot(path[i+1][0]-path[i][0],path[i+1][1]-path[i][1]);lens.push(d);total+=d}let x=t*total;for(let i=0;i<lens.length;i++){if(x<=lens[i]){let u=x/lens[i];return[path[i][0]+u*(path[i+1][0]-path[i][0]),path[i][1]+u*(path[i+1][1]-path[i][1])]};x-=lens[i]}return path.at(-1)}
   function drawQ1(){const r=q1.getBoundingClientRect();c.clearRect(0,0,r.width,r.height);const max=q1Mode==='dynamic'?5:q1Mode==='rotation'?3:layers,time=q1Mode==='rotation'?60*prog:q1Mode==='dynamic'?.15408094*prog:0,rot=time*Math.PI/30;drawLayerRings(max);c.save();const [ox,oy]=world([0,0]);c.translate(ox,oy);c.rotate(-rot);c.translate(-ox,-oy);for(const o of obstacles(max)){const [x,y,s]=world([o.x,o.y]),radius=q1Mode!=='static'||q1Step>0?9:8;c.beginPath();c.arc(x,y,radius*s,0,Math.PI*2);c.fillStyle=q1Step===3?'rgba(99,230,190,.14)':'rgba(67,215,255,.12)';c.fill();c.strokeStyle=q1Step===3?'rgba(99,230,190,.72)':'rgba(67,215,255,.55)';c.lineWidth=q1Step===3?2:1.2;c.stroke();c.beginPath();c.arc(x,y,2.3,0,Math.PI*2);c.fillStyle='#43d7ff';c.fill()}c.restore();const path=q1Mode==='dynamic'?dynamicPath:staticPathFor(layers),showPath=q1Mode==='dynamic'||q1Mode==='static'&&q1Step>=2,p=showPath?pathPoint(path,prog):[0,0];if(showPath){c.beginPath();path.forEach((z,i)=>{const [x,y]=world(z);i?c.lineTo(x,y):c.moveTo(x,y)});c.strokeStyle='rgba(255,180,84,.22)';c.lineWidth=3;c.lineJoin='round';c.stroke();c.beginPath();let done=false;path.forEach((z,i)=>{if(done)return;const [x,y]=world(z);if(i===0)c.moveTo(x,y);else{const prev=path[i-1],seg=Math.hypot(z[0]-prev[0],z[1]-prev[1]),toP=Math.hypot(p[0]-prev[0],p[1]-prev[1]);if(toP<=seg+.0001&&Math.hypot(p[0]-z[0],p[1]-z[1])>0.001){const [px,py]=world(p);c.lineTo(px,py);done=true}else c.lineTo(x,y)}});c.strokeStyle='#ffb454';c.lineWidth=q1Step===3?5:4;c.stroke()}const [rx,ry,s]=world(p);c.beginPath();c.arc(rx,ry,q1Mode==='static'&&q1Step===0?Math.max(4,s):7,0,Math.PI*2);c.fillStyle='#ff6b81';c.fill();if(q1Mode==='static'&&q1Step===0){c.strokeStyle='#ffb454';c.lineWidth=2;c.stroke()}const dist=Math.hypot(...p),angle=time*6;document.getElementById('q1Distance').textContent=dist.toFixed(1)+'m';document.getElementById('q1Progress').style.width=(prog*100).toFixed(1)+'%';document.getElementById('q1Time').textContent=(q1Mode==='rotation'?time.toFixed(1):time.toFixed(5))+' s';document.getElementById('q1Angle').textContent=angle.toFixed(q1Mode==='rotation'?1:3)+'°'}
   function animate(t){if(!last)last=t;const d=t-last;last=t;if(playing){prog+=d/(q1Mode==='static'?7000:12000);if(prog>=1){prog=1;playing=false;document.getElementById('q1Play').textContent='播放'}drawQ1()}requestAnimationFrame(animate)}
-  function setQ1(m){q1Mode=m;prog=0;playing=false;const stat=m==='static',rot=m==='rotation',dyn=m==='dynamic';if(stat){q1Step=2;q1Steps?.forEach(x=>x.classList.toggle('active',+x.dataset.q1Step===2))}for(const [id,on] of [['q1Static',stat],['q1Rotation',rot],['q1Dynamic',dyn]]){document.getElementById(id).classList.toggle('primary',on);document.getElementById(id).setAttribute('aria-pressed',String(on))}document.getElementById('layerGroup').hidden=!stat;document.getElementById('q1Telemetry').hidden=stat;document.getElementById('q1KeyInsight').hidden=!dyn;document.getElementById('q1CorridorInsight').hidden=!stat;document.getElementById('q1Speed').textContent=rot?'观察60秒周期':'693.9 m/s';document.getElementById('q1ModeTitle').textContent=stat?'第一、二问 · 静态网格路径':rot?'第三问条件 · 所有障碍物绕原点刚性旋转':'第三问方案 · 无限网格（画面重点显示前5层）';document.getElementById('q1Layers').textContent=stat?layers:rot?'3层示意':'5层可见';document.getElementById('q1Cards').textContent=stat?(layers===1?'0':layers===2?'9张（M(2)≤9）':'≤'+24*layers):rot?'条件演示':'19+81';document.getElementById('q1Clear').textContent=stat?'安全半径 9m':rot?'周期60秒':'≥9.000759m';document.getElementById('q1Explain').textContent=stat?(layers===1?'第一层有间隙，0张卡即可通过。':layers===2?'前两层：展示9张转向卡安全路线，严格得到 1≤M(2)≤9；9张最优仍是开放题猜想。':'一般 n 层：显式锯齿构造给出 M(n)≤24n，网页展示路线如何逐层延伸。'):rot?'所有障碍物保持相对位置不变，整体绕机器人初始位置逆时针匀速旋转，60秒恰好一周。点击播放观察刚性旋转。':'在无限网格中按真实相位逐段检查，保守可达94.5106米，最近圆心距连续认证下界为9.000759米。';drawQ1()}
+  function setQ1(m){
+    q1Mode=m;prog=0;playing=false;
+    const stat=m==='static',rot=m==='rotation',dyn=m==='dynamic';
+    if(stat){q1Step=2;q1Steps?.forEach(x=>x.classList.toggle('active',+x.dataset.q1Step===2))}
+    for(const [id,on] of [['q1Static',stat],['q1Rotation',rot],['q1Dynamic',dyn]]){
+      document.getElementById(id).classList.toggle('primary',on);
+      document.getElementById(id).setAttribute('aria-pressed',String(on));
+    }
+    document.getElementById('layerGroup').hidden=!stat;
+    document.getElementById('q1Telemetry').hidden=stat;
+    document.getElementById('q1KeyInsight').hidden=!dyn;
+    document.getElementById('q1CorridorInsight').hidden=!stat;
+    document.getElementById('q1Speed').textContent=rot?'观察60秒周期':dyn?'1.368×10⁶ m/s':'—';
+    document.getElementById('q1ModeTitle').textContent=stat?'第一、二问 · 静态网格路径':rot?'第三问条件 · 所有障碍物绕原点刚性旋转':'第三问方案 · 无限网格（画面重点显示前5层）';
+    document.getElementById('q1Layers').textContent=stat?layers:rot?'3层示意':'5层可见';
+    document.getElementById('q1Cards').textContent=stat?(layers===1?'0':layers===2?'9张（M(2)≤9）':'≤'+24*layers):rot?'条件演示':'47+53';
+    document.getElementById('q1Clear').textContent=stat?'安全半径 9m':rot?'周期60秒':'≥9.014577m';
+    document.getElementById('q1Explain').textContent=stat?(layers===1?'第一层有间隙，0张卡即可通过。':layers===2?'前两层：展示9张转向卡安全路线，严格得到 1≤M(2)≤9；9张最优仍是猜想。':layers===3?'画面展示通用72张锯齿构造；研究报告另有27张安全候选。一般结论仍为 M(n)≤24n。':'一般 n 层：显式锯齿构造给出 M(n)≤24n，路线按层延伸。'):rot?'所有障碍物保持相对位置不变，整体绕机器人初始位置逆时针匀速旋转，60秒恰好一周。点击播放观察刚性旋转。':'无限网格中，47张转向卡加53张加速卡的候选保守可达174.5136米，安全余量约0.01458米。';
+    drawQ1();
+  }
   document.getElementById('q1Static').onclick=()=>setQ1('static');document.getElementById('q1Rotation').onclick=()=>setQ1('rotation');document.getElementById('q1Dynamic').onclick=()=>setQ1('dynamic');document.getElementById('q1Play').onclick=e=>{if(prog>=1)prog=0;playing=!playing;e.target.textContent=playing?'暂停':'播放'};document.getElementById('q1Reset').onclick=()=>{prog=0;playing=false;document.getElementById('q1Play').textContent='播放';drawQ1()};document.getElementById('layerRange').oninput=e=>{layers=+e.target.value;document.getElementById('layerValue').textContent=layers+' 层';document.getElementById('q1Layers').textContent=layers;document.getElementById('q1Cards').textContent=q1Step<2?'—':layers===1?'0':layers===2?'9张（M(2)≤9）':'≤'+24*layers;drawQ1()};
   const q1Steps=[...document.querySelectorAll('[data-q1-step]')];const q1StepText=[
     '原题中机器人半径1米、障碍物半径8米。先观察两个有大小的圆何时会相碰。',
@@ -89,8 +119,18 @@
   function setQ2(m){q2Mode=m;q2Step=0;document.querySelectorAll('.q2mode').forEach(x=>{const on=x.dataset.mode===m;x.classList.toggle('primary',on);x.setAttribute('aria-pressed',String(on))});const status={motif:'当前：题目定义，不含推测结论',triangle:'当前：严格证明 E(n,1)=7',colex:'当前：经典定理给出的通用上界',bounds:'当前：严格区间与计算候选分级展示'};document.getElementById('q2Status').textContent=status[m];drawQ2()}
   document.querySelectorAll('.q2mode').forEach(x=>x.onclick=()=>setQ2(x.dataset.mode));document.getElementById('q2Next').onclick=()=>{if(q2Mode==='motif')setQ2('triangle');else if(q2Mode==='triangle'){q2Step=(q2Step+1)%5;drawQ2()}else if(q2Mode==='colex'){sVal=(sVal+1)%8;document.getElementById('edgeRange').value=sVal;document.getElementById('edgeValue').textContent=sVal;drawQ2()}else setQ2('motif')};document.getElementById('q2Reset').onclick=()=>setQ2('motif');document.getElementById('edgeRange').oninput=e=>{sVal=+e.target.value;document.getElementById('edgeValue').textContent=sVal;drawQ2()};
   window.addEventListener('resize',resizeQ1);window.addEventListener('keydown',e=>{if(e.key==='ArrowRight')showView('q2');if(e.key==='ArrowLeft')showView('q1');if(e.key.toLowerCase()==='r'){document.querySelector('.view.active').id==='q1'?document.getElementById('q1Reset').click():document.getElementById('q2Reset').click()}if(e.code==='Space'){e.preventDefault();document.querySelector('.view.active').id==='q1'?document.getElementById('q1Play').click():document.getElementById('q2Next').click()}});
-  const originalDynamicClick=document.getElementById('q1Dynamic').onclick;
-  document.getElementById('q1Dynamic').onclick=()=>{setQ1('dynamic');document.getElementById('q1Speed').textContent='1.368×10⁶ m/s';document.getElementById('q1Cards').textContent='47+53';document.getElementById('q1Clear').textContent='≥9.014577m';document.getElementById('q1Explain').textContent='无限网格中，47张转向卡+53张加速卡候选保守可达174.5136米，余量约0.01458米；该结果属于可复算的采样路径构造。'};
+  const drawQ1Base=drawQ1;
+  drawQ1=function(){
+    const rotateBase=c.rotate.bind(c);
+    if(q1Mode==='dynamic')c.rotate=angle=>rotateBase(angle*(.0001296207964/.15408094));
+    drawQ1Base();
+    c.rotate=rotateBase;
+    if(q1Mode==='dynamic'){
+      const dynamicTime=.0001296207964*prog;
+      document.getElementById('q1Time').textContent=dynamicTime.toFixed(8)+' s';
+      document.getElementById('q1Angle').textContent=(dynamicTime*6).toFixed(5)+'°';
+    }
+  };
   resizeQ1();drawQ2();requestAnimationFrame(animate);
 </script>
 </body>
