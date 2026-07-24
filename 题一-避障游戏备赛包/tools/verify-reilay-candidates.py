@@ -1,4 +1,4 @@
-"""Independent checks for the collaborator's sampled Q2/Q3 candidates.
+"""Independent checks for the sampled Q2/Q3 candidates.
 
 These checks certify the reported constructions and numerical margins only;
 they do not claim continuous or global optimality of the sampled searches.
@@ -47,6 +47,18 @@ def turn_cards(path):
     return cards
 
 
+def turn_angle(a, b, c):
+    ux, uy = b[0] - a[0], b[1] - a[1]
+    vx, vy = c[0] - b[0], c[1] - b[1]
+    return abs(math.degrees(math.atan2(ux * vy - uy * vx, ux * vx + uy * vy)))
+
+
+def fractional_layer(p):
+    j = p[1] / (10 * SQRT3)
+    i = (p[0] - 10 * j) / 20
+    return max(abs(i), abs(j), abs(i + j))
+
+
 def verify_q2():
     data = json.loads((ROOT / "labeled_corridor_result_refined_g0p3.json").read_text())
     waypoints = [point(p) for p in data["path"]]
@@ -57,13 +69,37 @@ def verify_q2():
         for p in centers(9)
     )
     assert data["cards"] == 42
-    # The first segment from the origin has freely chosen direction, so it
-    # carries no turn-card cost; the collaborator's 42 counts turns among
-    # the listed sampled waypoints.
+    # The saved 42-card count starts at the first-layer corridor point.  Once
+    # the origin is prepended, the first corridor point becomes a real bend.
     assert turn_cards(waypoints) == 42
+    entry_angle = turn_angle(path[0], path[1], path[2])
+    entry_cards = math.ceil((entry_angle - 1e-10) / 5.0)
+    assert entry_cards == 2
+    assert turn_cards(path) == 44
     assert minimum >= SAFE - 1e-9
     assert data["min_clearance"] > 0
-    return {"cards": 42, "minimumSegmentClearance": minimum, "sampledClearance": data["min_clearance"]}
+    endpoint_layer = fractional_layer(path[-1])
+    assert endpoint_layer < 9
+
+    # Continuing five metres in the last-segment direction is unsafe, so the
+    # saved path is not yet a complete exit construction for the first 9 layers.
+    a, b = path[-2], path[-1]
+    length = math.dist(a, b)
+    u = ((b[0] - a[0]) / length, (b[1] - a[1]) / length)
+    extended = (b[0] + 5 * u[0], b[1] + 5 * u[1])
+    extension_clearance = min(math.dist(extended, p) for p in centers(9))
+    assert extension_clearance < SAFE
+    return {
+        "corridorInternalCards": 42,
+        "entryAngleDeg": entry_angle,
+        "entryCards": entry_cards,
+        "originToCorridorEndpointCards": 44,
+        "minimumSegmentDistance": minimum,
+        "sampledClearance": data["min_clearance"],
+        "endpointFractionalLayer": endpoint_layer,
+        "fiveMetreExtensionDistance": extension_clearance,
+        "completeNineLayerExit": False,
+    }
 
 
 def nearest(x, y):
