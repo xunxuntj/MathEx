@@ -27,7 +27,7 @@
         <h2>从“圆机器人”到“点的路径”</h2><p class="callout">机器人半径1米、障碍物半径8米，等价为点机器人避开半径9米的安全圆。</p>
         <div class="controls"><button class="btn primary" id="q1Static" aria-pressed="true">一般 n 层</button><button class="btn" id="q1Rotation" aria-pressed="false">旋转机制</button><button class="btn" id="q1Dynamic" aria-pressed="false">100卡方案</button><button class="btn" id="q1Play">播放</button><button class="btn" id="q1Reset">复位</button></div><div class="progress-track" aria-label="动画进度"><i id="q1Progress"></i></div>
         <div class="stats"><div class="stat"><b id="q1Layers">3</b><span>展示层数 n</span></div><div class="stat"><b id="q1Cards">—</b><span>转向卡 / 总卡数</span></div><div class="stat"><b id="q1Clear">8m + 1m</b><span>碰撞边界</span></div><div class="stat"><b id="q1Distance">0.0m</b><span>当前离原点距离</span></div></div>
-        <p class="callout" id="q1KeyInsight" hidden><strong>100卡核心：</strong>19张加速卡把速度提高到约693.9米/秒，81张转向卡完成通道与末端转向；到达保守终点约需0.15408秒，障碍物转过约0.925°。这是一个经连续误差认证的可行方案：至少可达94.5106米。开放题的重点是模型、思路、复算与解释，不要求把它包装成唯一答案。</p>
+        <p class="callout" id="q1KeyInsight" hidden><strong>100卡核心：</strong>47张转向卡+53张加速卡候选，速度约1.368×10⁶米/秒，保守过程约0.00012962秒，障碍物仅转过约0.00078°；碰撞边界前回退0.02米，保守可达174.5136米，余量约0.01458米。它是可复算的采样候选，不是全局最优证明。</p>
         <div class="group" id="layerGroup"><label><span>一般层数</span><strong id="layerValue">3 层</strong></label><input id="layerRange" type="range" min="1" max="12" value="3"></div>
         <div class="group"><p id="q1Explain" aria-live="polite">原题中机器人半径1米、障碍物半径8米。先观察两个有大小的圆何时会相碰。</p></div>
         <div class="steps" aria-label="讲解步骤"><button class="step active" data-q1-step="0">1 点化</button><button class="step" data-q1-step="1">2 安全圆</button><button class="step" data-q1-step="2">3 路线</button><button class="step" data-q1-step="3">4 验证</button></div>
@@ -58,7 +58,7 @@
 
   const q1=document.getElementById('q1Canvas'),c=q1.getContext('2d');let q1Mode='static',q1Step=0,layers=3,playing=false,prog=0,last=0;const SQ=Math.sqrt(3),spacing=20;
   function staticPathFor(n){const h=spacing*SQ/6;if(n===1)return[[0,0],[30,10*SQ]];const p=[[0,0],[10,h],[20,2*h],[30,h],[40,2*h],[40,4*h]];for(let x=50;x<=20*n+10;x+=10){const k=(x-50)/10;p.push([x,(k%2===0?5:4)*h])}return p}
-  const dynamicPath=[[0,0],[10,5.7735026919],[20,11.5470053838],[30,5.7735026919],[40,11.5470053838],[50,5.7735026919],[60,11.5470053838],[70,5.7735026919],[80,11.5470053838],[94.1235579499,8.5449504674]];
+  const dynamicPath=[[0,0],[-10,5.7735026919],[-17.5,11.7735026919],[-21,20.2735026919],[-28,30.2735026919],[-35,43.2735026919],[-42,56.2735026919],[-50.5,70.2735026919],[-61.5,89.7735026919],[-72,108.2735026919],[-81.5,124.7735026919],[-89,136.7735026919],[-93.2088793742,147.2957011274]];
   function resizeQ1(){const r=q1.getBoundingClientRect(),d=devicePixelRatio||1;q1.width=r.width*d;q1.height=r.height*d;c.setTransform(d,0,0,d,0,0);drawQ1();}
   function world(p){const r=q1.getBoundingClientRect(),displayLayers=q1Mode==='dynamic'?5:q1Mode==='rotation'?3:layers,span=44*Math.max(3,displayLayers)+70,scale=Math.min(r.width/span,r.height/(38*Math.max(3,displayLayers)+55)),ox=r.width*.38,oy=r.height/2+18;return[ox+p[0]*scale,oy-p[1]*scale,scale]}
   function obstacles(max){const a=[];for(let i=-max;i<=max;i++)for(let j=-max;j<=max;j++){const l=Math.max(Math.abs(i),Math.abs(j),Math.abs(i+j));if(l&&l<=max)a.push({x:20*i+10*j,y:10*SQ*j,l})}return a}

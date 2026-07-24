@@ -17,7 +17,7 @@ const referenced = [...script.matchAll(/getElementById\('([^']+)'\)|getElementBy
 const missing = [...new Set(referenced.filter((id) => !ids.includes(id)))];
 if (missing.length) throw new Error(`脚本引用了不存在的 id: ${missing.join(", ")}`);
 
-for (const required of ["94.5106", "693.9", "0.15408", "0.925°", "24*layers", "K₁,₄", "严格证明", "程序验证"]) {
+for (const required of ["174.5136", "1.368", "0.00012962", "0.00078°", "24*layers", "K₁,₄", "严格证明", "程序验证"]) {
   if (!html.includes(required)) throw new Error(`缺少关键展示内容: ${required}`);
 }
 for (const required of ["19张加速卡", "81张转向卡", "94.5106米", "9.000759"]) {
